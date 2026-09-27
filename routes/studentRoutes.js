@@ -50,10 +50,10 @@ router.put("/:id", (req, res, next) => {
       return res.status(400).json({ message: "Nothing to update" });
     }
 
-    student.name = name ?? student.name;
-    student.email = email ?? student.email;
-    student.course = course ?? student.course;
-    student.age = age ?? student.age;
+    student.name = name ;
+    student.email = email ;
+    student.course = course ;
+    student.age = age ;
     res.status(200).json(student);
   } catch (err) {
     next(err);
