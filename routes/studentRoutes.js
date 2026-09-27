@@ -1,62 +1,74 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../data/students");
 const students = require("../data/students");
 
-router.get("/", (req, res) => {
-  res.status(200).json(students);
+router.get("/", (req, res, next) => {
+  try {
+    res.status(200).json(students);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.get("/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const student = students.find((s) => s.id === id);
-  if (!student) {
-    return res.status(404).json({ message: "Student not found" });
+router.get("/:id", (req, res, next) => {
+  try {
+    const student = students.find((s) => s.id === Number(req.params.id));
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.status(200).json(student);
+  } catch (err) {
+    next(err);
   }
-  res.status(200).json(student);
 });
 
-router.post("/", (req, res) => {
-  const { name, email, course, age } = req.body;
-  if (!name || !email || !course) {
-    return res.status(400).json({ message: "Name, email and course are required" });
+router.post("/", (req, res, next) => {
+  try {
+    const { name, email, course, age } = req.body;
+    if (!name || !email || !course) {
+      return res.status(400).json({ message: "Name, email and course are required" });
+    }
+    const newStudent = {
+      id: students.reduce((max, s) => Math.max(max, s.id), 0) + 1,
+      name,
+      email,
+      course,
+      age
+    };
+    students.push(newStudent);
+    res.status(201).json(newStudent);
+  } catch (err) {
+    next(err);
   }
-
-  const newStudent = {
-    id: students.length + 1,
-    name,
-    email,
-    age,
-    course
-  };
-
-  students.push(newStudent);
-  res.status(201).json(newStudent);
 });
 
-router.put("/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const student = students.find((s) => s.id === id);
-  if (!student) {
-    return res.status(404).json({ message: "Student not found" });
-  }
-  const { name, course, email, age } = req.body;
-  if (name) student.name = name;
-  if (course) student.course = course;
-  if (email) student.email = email;
-  if (age) student.age = age;
+router.put("/:id", (req, res, next) => {
+  try {
+    const student = students.find((s) => s.id === Number(req.params.id));
+    if (!student) return res.status(404).json({ message: "Student not found" });
 
-  res.status(200).json(student);
+    const { name, email, course, age } = req.body;
+    if (!name && !email && !course && !age) {
+      return res.status(400).json({ message: "Nothing to update" });
+    }
+
+    student.name = name ?? student.name;
+    student.email = email ?? student.email;
+    student.course = course ?? student.course;
+    student.age = age ?? student.age;
+    res.status(200).json(student);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.delete("/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const studentIndex = students.findIndex((s) => s.id === id);
-  if (studentIndex === -1) {
-    return res.status(404).json({ message: "Student not found" });
+router.delete("/:id", (req, res, next) => {
+  try {
+    const index = students.findIndex((s) => s.id === Number(req.params.id));
+    if (index === -1) return res.status(404).json({ message: "Student not found" });
+    const [deleted] = students.splice(index, 1);
+    res.status(200).json({ message: "Student deleted", student: deleted });
+  } catch (err) {
+    next(err);
   }
-  students.splice(studentIndex, 1);
-  res.status(200).json({ message: "Student deleted" });
 });
 
 module.exports = router;
